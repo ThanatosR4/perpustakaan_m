@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../services/peminjaman_service.dart';
+import '../../models/peminjaman_model.dart';
+import '../../models/buku_model.dart'; 
+import '../../screens/buku/detail_buku_screen.dart'; 
 
 class PeminjamanScreen extends StatefulWidget {
   @override
@@ -9,86 +14,74 @@ class _PeminjamanScreenState extends State<PeminjamanScreen> {
   final TextEditingController _searchController = TextEditingController();
   String searchQuery = "";
 
-  final List<Map<String, String>> sedangDipinjam = [
-    {
-      "judul": "Fisika Dasar",
-      "pengarang": "Budi Santosa",
-      "tanggalPinjam": "2025-06-20",
-      "tanggalKembali": "2025-07-05",
-      "gambar": "https://via.placeholder.com/120"
-    },
-    {
-      "judul": "Laskar Pelangi",
-      "pengarang": "Andrea Hirata",
-      "tanggalPinjam": "2025-06-25",
-      "tanggalKembali": "2025-07-10",
-      "gambar": "https://via.placeholder.com/120"
-    },
-  ];
+  List<Peminjaman> sedangDipinjam = [];
+  List<Peminjaman> riwayatPeminjaman = [];
+  final NumberFormat rupiahFormatter = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp',
+    decimalDigits: 0,
+  );
 
-  final List<Map<String, String>> riwayatPeminjaman = [
-    {
-      "judul": "Matematika Wajib",
-      "pengarang": "Siti Aisyah",
-      "tanggalPinjam": "2025-05-10",
-      "tanggalKembali": "2025-05-25",
-      "gambar": "https://via.placeholder.com/120"
-    },
-    {
-      "judul": "KIMIA SMA",
-      "pengarang": "Dr. Harun",
-      "tanggalPinjam": "2025-04-01",
-      "tanggalKembali": "2025-04-15",
-      "gambar": "https://via.placeholder.com/120"
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchPeminjaman();
+  }
 
-  List<Map<String, String>> get filteredSedangDipinjam => sedangDipinjam
-      .where((b) => b["judul"]!.toLowerCase().contains(searchQuery.toLowerCase()))
-      .toList();
-
-  List<Map<String, String>> get filteredRiwayat => riwayatPeminjaman
-      .where((b) => b["judul"]!.toLowerCase().contains(searchQuery.toLowerCase()))
-      .toList();
+  Future<void> fetchPeminjaman() async {
+    try {
+      final data = await PeminjamanService.fetchPeminjaman();
+      setState(() {
+        sedangDipinjam = data.where((item) => item.status == 'dipinjam').toList();
+        riwayatPeminjaman = data.where((item) => item.status == 'sudah kembali').toList();
+      });
+    } catch (e) {
+      print('Gagal fetch peminjaman: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🔍 Search Bar
-            TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Cari judul buku...",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+    return RefreshIndicator(
+      onRefresh: fetchPeminjaman,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: "Cari judul buku...",
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                ),
+                onChanged: (value) => setState(() => searchQuery = value),
               ),
-              onChanged: (value) => setState(() => searchQuery = value),
-            ),
-            const SizedBox(height: 20),
-
-            // 🔵 Buku Sedang Dipinjam
-            const Text("📘 Buku Sedang Dipinjam", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            ...filteredSedangDipinjam.map((book) => _buildBookTile(book, active: true)).toList(),
-
-            const SizedBox(height: 20),
-
-            // ⚪ Riwayat Peminjaman
-            const Text("📚 Riwayat Peminjaman", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            ...filteredRiwayat.map((book) => _buildBookTile(book, active: false)).toList(),
-          ],
+              const SizedBox(height: 20),
+              const Text("📘 Buku Sedang Dipinjam", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              ...sedangDipinjam
+                  .where((b) => b.bukuJudul.toLowerCase().contains(searchQuery.toLowerCase()))
+                  .map((b) => _buildBookTile(b, active: true))
+                  .toList(),
+              const SizedBox(height: 20),
+              const Text("📚 Riwayat Peminjaman", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              ...riwayatPeminjaman
+                  .where((b) => b.bukuJudul.toLowerCase().contains(searchQuery.toLowerCase()))
+                  .map((b) => _buildBookTile(b, active: false))
+                  .toList(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildBookTile(Map<String, String> book, {required bool active}) {
+  Widget _buildBookTile(Peminjaman b, {required bool active}) {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -96,18 +89,46 @@ class _PeminjamanScreenState extends State<PeminjamanScreen> {
       child: ListTile(
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(book["gambar"]!, width: 50, height: 70, fit: BoxFit.cover),
+          child: Image.network(b.gambar, width: 50, height: 70, fit: BoxFit.cover),
         ),
-        title: Text(book["judul"]!, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(b.bukuJudul, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Pengarang: ${book["pengarang"]}"),
-            Text("Pinjam: ${book["tanggalPinjam"]}"),
-            Text("Kembali: ${book["tanggalKembali"]}"),
+            Text("Pengarang: ${b.bukuPengarang}"),
+            Text("Pinjam: ${DateFormat('yyyy-MM-dd').format(b.tanggalPinjam)}"),
+            Text("Kembali: ${DateFormat('yyyy-MM-dd').format(b.tanggalKembali)}"),
+            if (active && DateTime.now().isAfter(b.tanggalKembali))
+              Text(
+                "Denda: ${rupiahFormatter.format(DateTime.now().difference(b.tanggalKembali).inDays * Peminjaman.dendaPerHari)}",
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
           ],
         ),
         trailing: Icon(active ? Icons.access_time : Icons.check_circle, color: active ? Colors.orange : Colors.green),
+        onTap: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetailBukuScreen(
+                bukuId: b.id, 
+                title: b.bukuJudul,
+                image: b.gambar,
+                author: b.bukuPengarang,
+                category: "Kategori", 
+                description: "Deskripsi", 
+                isbn: "ISBN", 
+                tahunTerbit: 2024,
+                stok: 1,
+              ),
+            ),
+          );
+
+          
+          if (result == true) {
+            fetchPeminjaman();
+          }
+        },
       ),
     );
   }

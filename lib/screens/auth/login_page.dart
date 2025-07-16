@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../services/auth_service.dart'; // pastikan path benar
+import '../../services/auth_service.dart'; 
 import '../home_screen.dart';
 import 'signup_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,24 +16,27 @@ class _HomePageState extends State<HomePage> {
   final passwordController = TextEditingController();
 
   void _handleLogin() async {
-    final token = await AuthService.login(
-      emailController.text.trim(),
-      passwordController.text.trim(),
-    );
+  final token = await AuthService.login(
+    emailController.text.trim(),
+    passwordController.text.trim(),
+  );
 
-    if (token != null) {
-      // Token berhasil didapat, lanjut ke Home
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    } else {
-      // Gagal login
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Email atau password salah")),
-      );
-    }
+  if (token != null) {
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+
+    
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomeScreen()),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Email atau password salah")),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +62,7 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Teks kiri
+                  
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -79,7 +83,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  // Gambar kanan
+                  
                   FadeInUp(
                     duration: Duration(milliseconds: 1000),
                     child: Image.asset(
@@ -173,7 +177,7 @@ class _HomePageState extends State<HomePage> {
                       FadeInUp(
                         duration: Duration(milliseconds: 1500),
                         child: Text(
-                          "Forgot Password?",
+                          "",
                           style: TextStyle(color: Colors.grey),
                         ),
                       ),

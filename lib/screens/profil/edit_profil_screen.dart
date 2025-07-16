@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../services/siswa_service.dart';
 import 'package:intl/intl.dart';
+import '../../services/siswa_service.dart';
+import 'ubah_password_screen.dart';
 
 class EditProfilScreen extends StatefulWidget {
   @override
@@ -12,7 +13,6 @@ class EditProfilScreen extends StatefulWidget {
 class _EditProfilScreenState extends State<EditProfilScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Form controllers
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _tempatLahirController = TextEditingController();
@@ -23,6 +23,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
   String? _selectedKelas;
   String? _selectedGender;
   File? _selectedImage;
+  String? _fotoUrl;
   bool _loading = false;
 
   final List<String> kelasList = ['X', 'XI', 'XII'];
@@ -35,17 +36,18 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
   }
 
   Future<void> _fetchProfile() async {
-    final data = await SiswaService.getProfile();
-    if (data != null) {
+    final siswa = await SiswaService.getProfile();
+    if (siswa != null) {
       setState(() {
-        _namaController.text = data['nama'] ?? '';
-        _emailController.text = data['email'] ?? '';
-        _selectedGender = data['jenis_kelamin'];
-        _tempatLahirController.text = data['tempat_lahir'] ?? '';
-        _tanggalLahirController.text = data['tanggal_lahir'] ?? '';
-        _teleponController.text = data['telepon'] ?? '';
-        _alamatController.text = data['alamat'] ?? '';
-        _selectedKelas = data['kelas'];
+        _namaController.text = siswa.nama;
+        _emailController.text = siswa.email;
+        _selectedGender = siswa.jenisKelamin;
+        _tempatLahirController.text = siswa.tempatLahir ?? '';
+        _tanggalLahirController.text = siswa.tanggalLahir ?? '';
+        _teleponController.text = siswa.telepon ?? '';
+        _alamatController.text = siswa.alamat ?? '';
+        _selectedKelas = siswa.kelas;
+        _fotoUrl = siswa.fotoUrl;
       });
     }
   }
@@ -60,29 +62,54 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
   }
 
   Future<void> _pickDate() async {
-    DateTime? pickedDate = await showDatePicker(
+    DateTime initialDate = DateTime.tryParse(_tanggalLahirController.text) ?? DateTime(2000);
+    final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.tryParse(_tanggalLahirController.text) ?? DateTime(2000),
+      initialDate: initialDate,
       firstDate: DateTime(1980),
       lastDate: DateTime.now(),
     );
-
-    if (pickedDate != null) {
-      String formattedDate = DateFormat('yyyy-MM-dd').format(pickedDate);
+    if (picked != null) {
+      final formatted = DateFormat('yyyy-MM-dd').format(picked);
       setState(() {
-        _tanggalLahirController.text = formattedDate;
+        _tanggalLahirController.text = formatted;
       });
     }
+  }
+
+  void _showConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Konfirmasi"),
+        content: Text("Apakah Anda yakin ingin menyimpan perubahan?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Batal"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange[900]),
+            onPressed: () {
+              Navigator.pop(context); 
+              _submitForm(); 
+            },
+            child: Text("Ya, Simpan"),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _loading = true);
 
-      bool success = await SiswaService.updateProfile(
+      final success = await SiswaService.updateProfile(
         nama: _namaController.text,
         email: _emailController.text,
         jenisKelamin: _selectedGender,
+        kelas: _selectedKelas,
         tempatLahir: _tempatLahirController.text,
         tanggalLahir: _tanggalLahirController.text,
         telepon: _teleponController.text,
@@ -112,14 +139,16 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Foto profil
                     Stack(
                       children: [
                         CircleAvatar(
                           radius: 50,
                           backgroundImage: _selectedImage != null
                               ? FileImage(_selectedImage!)
-                              : const AssetImage('assets/images/default_avatar.png') as ImageProvider,
+                              : (_fotoUrl != null && _fotoUrl!.isNotEmpty
+                                  ? NetworkImage(_fotoUrl!)
+                                  : const AssetImage('assets/images/default_avatar.png'))
+                                  as ImageProvider,
                         ),
                         Positioned(
                           bottom: 0,
@@ -139,26 +168,60 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
 
                     _buildField('Nama', _namaController, Icons.person),
                     _buildField('Email', _emailController, Icons.email),
-                    _buildDropdown('Jenis Kelamin', _selectedGender, genderList, (val) {
-                      setState(() => _selectedGender = val);
-                    }),
-                    _buildDropdown('Kelas', _selectedKelas, kelasList, (val) {
-                      setState(() => _selectedKelas = val);
-                    }),
-                    _buildField('Tempat Lahir', _tempatLahirController, Icons.location_city),
-                    _buildDateField('Tanggal Lahir', _tanggalLahirController),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDropdown('Kelas', _selectedKelas, kelasList, (val) {
+                            setState(() => _selectedKelas = val);
+                          }),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildDropdown('Jenis Kelamin', _selectedGender, genderList, (val) {
+                            setState(() => _selectedGender = val);
+                          }),
+                        ),
+                      ],
+                    ),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildField('Tempat Lahir', _tempatLahirController, Icons.location_city),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildDateField('Tanggal Lahir', _tanggalLahirController),
+                        ),
+                      ],
+                    ),
+
                     _buildField('No. HP', _teleponController, Icons.phone),
                     _buildField('Alamat', _alamatController, Icons.home),
 
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _submitForm,
+                      onPressed: _showConfirmDialog,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                         backgroundColor: Colors.orange[900],
                       ),
                       child: const Text('Simpan'),
                     ),
+
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => UbahPasswordScreen()),
+                        );
+                      },
+                      child: const Text(
+                        'Ubah Password',
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -191,7 +254,7 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: const Icon(Icons.date_range),
-          hintText: 'dd/mm/yyyy',
+          hintText: 'yyyy-mm-dd',
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         validator: (value) => value!.isEmpty ? '$label tidak boleh kosong' : null,

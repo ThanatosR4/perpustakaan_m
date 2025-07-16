@@ -55,12 +55,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Spacer(),
-                    const CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 18,
-                      child: Icon(Icons.person, color: Colors.blue),
-                    ),
+                    // const Spacer(),
+                    // const CircleAvatar(
+                    //   backgroundColor: Colors.white,
+                    //   radius: 18,
+                    //   child: Icon(Icons.person, color: Colors.blue),
+                    // ),
                   ],
                 ),
               ),

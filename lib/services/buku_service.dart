@@ -3,11 +3,11 @@ import 'package:http/http.dart' as http;
 import '../models/buku_model.dart';
 
 class BukuService {
-  // Ganti dengan URL Laravel kamu
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  
+  static const String baseUrl = 'http://10.0.2.2:8000';
 
   static Future<List<Buku>> fetchBuku() async {
-    final url = Uri.parse('$baseUrl/buku');
+    final url = Uri.parse('$baseUrl/api/buku');
 
     try {
       final response = await http.get(url);

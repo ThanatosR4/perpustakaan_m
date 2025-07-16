@@ -5,7 +5,7 @@ class AuthService {
   
   static const String baseUrl = 'http://10.0.2.2:8000';
 
-  //  Login siswa
+  
   static Future<String?> login(String email, String password) async {
     final url = Uri.parse('$baseUrl/api/siswa/login');
     try {
@@ -31,7 +31,7 @@ class AuthService {
     }
   }
 
-  // Register siswa
+
   static Future<bool> register({
     required String kode,
     required String nama,

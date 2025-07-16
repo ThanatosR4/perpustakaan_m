@@ -4,6 +4,7 @@ import '../../services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
+  
   _SignUpPageState createState() => _SignUpPageState();
 }
 
@@ -29,8 +30,7 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-  // ✅ INI yang sudah TERHUBUNG ke Laravel API
+
   void _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
       final success = await AuthService.register(
@@ -47,7 +47,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()), // kembali ke login
+          MaterialPageRoute(builder: (context) => HomePage()), 
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
