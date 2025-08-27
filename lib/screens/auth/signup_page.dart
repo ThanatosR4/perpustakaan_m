@@ -4,13 +4,11 @@ import '../../services/auth_service.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
-  
   _SignUpPageState createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController nisnController = TextEditingController();
   final TextEditingController namaController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
@@ -19,6 +17,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -30,9 +29,10 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-
   void _handleSignUp() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
       final success = await AuthService.register(
         kode: nisnController.text.trim(),
         nama: namaController.text.trim(),
@@ -40,14 +40,15 @@ class _SignUpPageState extends State<SignUpPage> {
         password: passwordController.text.trim(),
       );
 
+      setState(() => _isLoading = false);
+
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Pendaftaran berhasil. Silakan login")),
         );
-
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()), 
+          MaterialPageRoute(builder: (context) => HomePage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +60,18 @@ class _SignUpPageState extends State<SignUpPage> {
 
   String? _validateField(String value) {
     return value.isEmpty ? "Field ini wajib diisi" : null;
+  }
+
+  String? _validateEmail(String value) {
+    if (value.isEmpty) return "Email wajib diisi";
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return "Format email tidak valid";
+    return null;
+  }
+
+  String? _validatePassword(String value) {
+    if (value.isEmpty) return "Password wajib diisi";
+    if (value.length < 6) return "Minimal 6 karakter";
+    return null;
   }
 
   String? _validatePasswordMatch(String value) {
@@ -101,7 +114,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       const SizedBox(height: 30),
                       _buildTextField("NISN", nisnController),
                       _buildTextField("Nama Lengkap", namaController),
-                      _buildTextField("Email", emailController),
+                      _buildTextField("Email", emailController, isEmail: true),
                       _buildPasswordField("Password", passwordController, _obscurePassword, () {
                         setState(() => _obscurePassword = !_obscurePassword);
                       }),
@@ -109,19 +122,21 @@ class _SignUpPageState extends State<SignUpPage> {
                         setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
                       }, isConfirm: true),
                       const SizedBox(height: 30),
-                      MaterialButton(
-                        onPressed: _handleSignUp,
-                        height: 50,
-                        minWidth: double.infinity,
-                        color: Colors.orange[900],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: const Text(
-                          "Daftar",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      _isLoading
+                          ? CircularProgressIndicator()
+                          : MaterialButton(
+                              onPressed: _handleSignUp,
+                              height: 50,
+                              minWidth: double.infinity,
+                              color: Colors.orange[900],
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              child: const Text(
+                                "Daftar",
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                       const SizedBox(height: 20),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
@@ -141,11 +156,13 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
-  Widget _buildTextField(String hint, TextEditingController controller) {
+  Widget _buildTextField(String hint, TextEditingController controller, {bool isEmail = false}) {
     return _buildInputContainer(
       child: TextFormField(
         controller: controller,
-        validator: (value) => _validateField(value!),
+        validator: (value) => isEmail ? _validateEmail(value!) : _validateField(value!),
+        keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
+        autofillHints: isEmail ? [AutofillHints.email] : null,
         decoration: InputDecoration(
           hintText: hint,
           border: InputBorder.none,
@@ -159,15 +176,12 @@ class _SignUpPageState extends State<SignUpPage> {
       child: TextFormField(
         controller: controller,
         obscureText: obscure,
-        validator: (value) => isConfirm ? _validatePasswordMatch(value!) : _validateField(value!),
+        validator: (value) => isConfirm ? _validatePasswordMatch(value!) : _validatePassword(value!),
         decoration: InputDecoration(
           hintText: hint,
           border: InputBorder.none,
           suffixIcon: IconButton(
-            icon: Icon(
-              obscure ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey,
-            ),
+            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
             onPressed: toggle,
           ),
         ),

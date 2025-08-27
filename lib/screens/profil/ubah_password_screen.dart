@@ -31,6 +31,7 @@ class _UbahPasswordScreenState extends State<UbahPasswordScreen> {
             onPressed: () => Navigator.pop(context, false),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange[900]),
             child: const Text("Ya, Ubah"),
             onPressed: () => Navigator.pop(context, true),
           ),
@@ -69,9 +70,9 @@ class _UbahPasswordScreenState extends State<UbahPasswordScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             colors: [
-              Color.fromARGB(255, 0, 58, 230),
-              Color.fromARGB(255, 8, 0, 239),
-              Color.fromARGB(255, 38, 38, 255),
+              Color(0xFF003AE6),
+              Color(0xFF0800EF),
+              Color(0xFF2626FF),
             ],
           ),
         ),
@@ -146,6 +147,7 @@ class _UbahPasswordScreenState extends State<UbahPasswordScreen> {
                             toggleObscure: () =>
                                 setState(() => _obscureConfirm = !_obscureConfirm),
                             validator: (value) {
+                              if (value!.isEmpty) return 'Tidak boleh kosong';
                               if (value != newPasswordController.text) {
                                 return 'Konfirmasi password tidak cocok';
                               }

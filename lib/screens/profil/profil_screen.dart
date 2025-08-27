@@ -49,7 +49,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
               radius: 50,
               backgroundImage: (fotoUrl != null && fotoUrl.isNotEmpty)
                   ? NetworkImage(fotoUrl)
-                  : AssetImage('assets/images/profile_default.png') as ImageProvider,
+                  : AssetImage('assets/images/profile_default.jpg') as ImageProvider,
             ),
             const SizedBox(height: 10),
             Text(

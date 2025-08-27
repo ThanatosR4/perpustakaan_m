@@ -5,13 +5,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/peminjaman_model.dart';
 
 class PeminjamanService {
-  // Ambil daftar peminjaman siswa
+  static const String _baseUrl = 'https://perpustakaansma1telker.web.id';
+
+  /// Ambil daftar peminjaman siswa
   static Future<List<Peminjaman>> fetchPeminjaman() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
+    if (token.isEmpty) {
+      throw Exception('Token tidak ditemukan. Harap login ulang.');
+    }
+
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/siswa/peminjaman'),
+      Uri.parse('$_baseUrl/api/siswa/peminjaman'),
       headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
@@ -20,30 +26,37 @@ class PeminjamanService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      Peminjaman.dendaPerHari = data['denda_per_hari'] ?? 0; 
+      Peminjaman.dendaPerHari = int.tryParse(data['denda_per_hari'].toString()) ?? 0;
       return List<Peminjaman>.from(
         data['data'].map((item) => Peminjaman.fromJson(item)),
       );
     } else {
+      print('Fetch Error: ${response.statusCode}');
+      print('Response: ${response.body}');
       throw Exception('Gagal memuat data peminjaman');
     }
   }
 
-  // Kirim permintaan peminjaman buku
+  /// Kirim permintaan peminjaman buku
   static Future<void> pinjamBuku({
     required int bukuId,
     required DateTime tanggalPinjam,
     required int lamaPinjam,
-    String keterangan = '', 
+    String keterangan = '',
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
+    if (token.isEmpty) {
+      throw Exception('Token tidak ditemukan. Harap login ulang.');
+    }
+
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/siswa/peminjaman'),
+      Uri.parse('$_baseUrl/api/siswa/peminjaman'),
       headers: {
         'Authorization': 'Bearer $token',
         'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {
         'buku_id': bukuId.toString(),
@@ -53,10 +66,16 @@ class PeminjamanService {
       },
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['status'] != true) {
+        throw Exception(data['message'] ?? 'Gagal meminjam buku');
+      }
+    } else {
+      print('POST Error: ${response.statusCode}');
+      print('Response: ${response.body}');
       final error = jsonDecode(response.body);
-      throw error['message'] ?? 'Gagal meminjam buku';
+      throw Exception(error['message'] ?? 'Gagal meminjam buku');
     }
   }
-
 }

@@ -13,12 +13,12 @@ class EditProfilScreen extends StatefulWidget {
 class _EditProfilScreenState extends State<EditProfilScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _tempatLahirController = TextEditingController();
-  final TextEditingController _tanggalLahirController = TextEditingController();
-  final TextEditingController _teleponController = TextEditingController();
-  final TextEditingController _alamatController = TextEditingController();
+  final _namaController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _tempatLahirController = TextEditingController();
+  final _tanggalLahirController = TextEditingController();
+  final _teleponController = TextEditingController();
+  final _alamatController = TextEditingController();
 
   String? _selectedKelas;
   String? _selectedGender;
@@ -32,10 +32,10 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchProfile();
+    _loadProfile();
   }
 
-  Future<void> _fetchProfile() async {
+  Future<void> _loadProfile() async {
     final siswa = await SiswaService.getProfile();
     if (siswa != null) {
       setState(() {
@@ -55,56 +55,27 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
   Future<void> _pickImage() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked != null) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+      setState(() => _selectedImage = File(picked.path));
     }
   }
 
   Future<void> _pickDate() async {
-    DateTime initialDate = DateTime.tryParse(_tanggalLahirController.text) ?? DateTime(2000);
+    final now = DateTime.now();
+    final initial = DateTime.tryParse(_tanggalLahirController.text) ?? DateTime(now.year - 15);
     final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
+      initialDate: initial,
       firstDate: DateTime(1980),
-      lastDate: DateTime.now(),
+      lastDate: now,
     );
     if (picked != null) {
-      final formatted = DateFormat('yyyy-MM-dd').format(picked);
-      setState(() {
-        _tanggalLahirController.text = formatted;
-      });
+      _tanggalLahirController.text = DateFormat('yyyy-MM-dd').format(picked);
     }
-  }
-
-  void _showConfirmDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Konfirmasi"),
-        content: Text("Apakah Anda yakin ingin menyimpan perubahan?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Batal"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange[900]),
-            onPressed: () {
-              Navigator.pop(context); 
-              _submitForm(); 
-            },
-            child: Text("Ya, Simpan"),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _loading = true);
-
       final success = await SiswaService.updateProfile(
         nama: _namaController.text,
         email: _emailController.text,
@@ -116,25 +87,43 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
         alamat: _alamatController.text,
         foto: _selectedImage,
       );
-
       setState(() => _loading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(success ? 'Profil berhasil diperbarui' : 'Gagal memperbarui profil')),
-      );
-
+      final msg = success ? 'Profil berhasil diperbarui' : 'Gagal memperbarui profil';
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       if (success) Navigator.pop(context);
     }
+  }
+
+  void _confirmSimpan() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Konfirmasi"),
+        content: Text("Apakah Anda yakin ingin menyimpan perubahan?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text("Batal")),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _submitForm();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange[900]),
+            child: Text("Ya, Simpan"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profil')),
+      appBar: AppBar(title: Text('Edit Profil')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -147,15 +136,14 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
                               ? FileImage(_selectedImage!)
                               : (_fotoUrl != null && _fotoUrl!.isNotEmpty
                                   ? NetworkImage(_fotoUrl!)
-                                  : const AssetImage('assets/images/default_avatar.png'))
-                                  as ImageProvider,
+                                  : AssetImage('assets/images/profile_default.jpg')) as ImageProvider,
                         ),
                         Positioned(
                           bottom: 0,
                           right: 0,
                           child: GestureDetector(
                             onTap: _pickImage,
-                            child: const CircleAvatar(
+                            child: CircleAvatar(
                               radius: 16,
                               backgroundColor: Colors.orange,
                               child: Icon(Icons.edit, size: 16, color: Colors.white),
@@ -164,63 +152,37 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
-                    _buildField('Nama', _namaController, Icons.person),
-                    _buildField('Email', _emailController, Icons.email),
-
+                    SizedBox(height: 20),
+                    _buildInput('Nama', _namaController, Icons.person),
+                    _buildInput('Email', _emailController, Icons.email),
                     Row(
                       children: [
-                        Expanded(
-                          child: _buildDropdown('Kelas', _selectedKelas, kelasList, (val) {
-                            setState(() => _selectedKelas = val);
-                          }),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildDropdown('Jenis Kelamin', _selectedGender, genderList, (val) {
-                            setState(() => _selectedGender = val);
-                          }),
-                        ),
+                        Expanded(child: _buildDropdown('Kelas', _selectedKelas, kelasList, (val) => setState(() => _selectedKelas = val))),
+                        SizedBox(width: 10),
+                        Expanded(child: _buildDropdown('Jenis Kelamin', _selectedGender, genderList, (val) => setState(() => _selectedGender = val))),
                       ],
                     ),
-
                     Row(
                       children: [
-                        Expanded(
-                          child: _buildField('Tempat Lahir', _tempatLahirController, Icons.location_city),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildDateField('Tanggal Lahir', _tanggalLahirController),
-                        ),
+                        Expanded(child: _buildInput('Tempat Lahir', _tempatLahirController, Icons.location_city)),
+                        SizedBox(width: 10),
+                        Expanded(child: _buildDateField('Tanggal Lahir', _tanggalLahirController)),
                       ],
                     ),
-
-                    _buildField('No. HP', _teleponController, Icons.phone),
-                    _buildField('Alamat', _alamatController, Icons.home),
-
-                    const SizedBox(height: 20),
+                    _buildInput('No. HP', _teleponController, Icons.phone),
+                    _buildInput('Alamat', _alamatController, Icons.home),
+                    SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: _showConfirmDialog,
+                      onPressed: _confirmSimpan,
+                      child: Text('Simpan'),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                         backgroundColor: Colors.orange[900],
                       ),
-                      child: const Text('Simpan'),
                     ),
-
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => UbahPasswordScreen()),
-                        );
-                      },
-                      child: const Text(
-                        'Ubah Password',
-                        style: TextStyle(color: Colors.blue),
-                      ),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => UbahPasswordScreen())),
+                      child: Text('Ubah Password', style: TextStyle(color: Colors.blue)),
                     )
                   ],
                 ),
@@ -229,9 +191,9 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
     );
   }
 
-  Widget _buildField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildInput(String label, TextEditingController controller, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
@@ -246,15 +208,14 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
 
   Widget _buildDateField(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
         readOnly: true,
         onTap: _pickDate,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: const Icon(Icons.date_range),
-          hintText: 'yyyy-mm-dd',
+          prefixIcon: Icon(Icons.date_range),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         validator: (value) => value!.isEmpty ? '$label tidak boleh kosong' : null,
@@ -262,19 +223,19 @@ class _EditProfilScreenState extends State<EditProfilScreen> {
     );
   }
 
-  Widget _buildDropdown(String label, String? value, List<String> items, void Function(String?) onChanged) {
+  Widget _buildDropdown(String label, String? value, List<String> options, void Function(String?) onChanged) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: EdgeInsets.only(bottom: 15),
       child: DropdownButtonFormField<String>(
         value: value,
+        items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: const Icon(Icons.arrow_drop_down),
+          prefixIcon: Icon(Icons.arrow_drop_down),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
-        onChanged: onChanged,
-        validator: (value) => value == null || value.isEmpty ? '$label harus dipilih' : null,
+        validator: (val) => (val == null || val.isEmpty) ? '$label harus dipilih' : null,
       ),
     );
   }

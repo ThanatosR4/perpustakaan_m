@@ -26,25 +26,23 @@ class Siswa {
   });
 
   String get fotoUrl {
-    if (foto == null || foto!.isEmpty) {
-      return ''; 
-    }
-    return 'http://10.0.2.2:8000/storage/$foto';
+    if (foto == null || foto!.isEmpty) return '';
+    return 'https://perpustakaansma1telker.web.id/storage/$foto';
   }
 
   factory Siswa.fromJson(Map<String, dynamic> json) {
     return Siswa(
-      id: json['id'],
+      id: int.tryParse(json['id'].toString()) ?? 0,
       nama: json['nama'] ?? '',
       email: json['email'] ?? '',
       nisn: json['kode'] ?? '',
       foto: json['foto'],
-      kelas: json['kelas'],
-      telepon: json['telepon'],
-      alamat: json['alamat'],
-      jenisKelamin: json['jenis_kelamin'],
-      tempatLahir: json['tempat_lahir'],
-      tanggalLahir: json['tanggal_lahir'],
+      kelas: json['kelas']?.toString(),
+      telepon: json['telepon']?.toString(),
+      alamat: json['alamat']?.toString(),
+      jenisKelamin: json['jenis_kelamin']?.toString(),
+      tempatLahir: json['tempat_lahir']?.toString(),
+      tanggalLahir: json['tanggal_lahir']?.toString(),
     );
   }
 

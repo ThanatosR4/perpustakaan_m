@@ -13,7 +13,7 @@ class DetailBukuScreen extends StatefulWidget {
   final int stok;
 
   const DetailBukuScreen({
-    super.key,
+    Key? key,
     required this.bukuId,
     required this.title,
     required this.image,
@@ -23,7 +23,7 @@ class DetailBukuScreen extends StatefulWidget {
     required this.isbn,
     required this.tahunTerbit,
     required this.stok,
-  });
+  }) : super(key: key);
 
   @override
   State<DetailBukuScreen> createState() => _DetailBukuScreenState();
@@ -36,107 +36,167 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
     setState(() => showDetails = !showDetails);
   }
 
+  void _showFullImage() {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: InteractiveViewer(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                widget.image,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[300],
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.image_not_supported, size: 80, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                colors: [Color(0xFF003AE6), Color(0xFF0800EF), Color(0xFF2626FF)],
-              ),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  "Detail Buku",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(widget.image, height: 200, fit: BoxFit.cover),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(widget.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-
-                  GestureDetector(
-                    onTap: _toggleDetails,
-                    child: Row(
-                      children: [
-                        Icon(showDetails ? Icons.expand_less : Icons.expand_more, color: Colors.blue),
-                        const SizedBox(width: 6),
-                        Text(
-                          showDetails ? "Sembunyikan Detail Tambahan" : "Tampilkan Detail Tambahan",
-                          style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            colors: [Color(0xFF003AE6), Color(0xFF0800EF), Color(0xFF2626FF)],
+                          ),
+                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (showDetails)
-                    GridView(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 3.5,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              "Detail Buku",
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                          ],
+                        ),
                       ),
-                      children: [
-                        _infoCard(Icons.person, "Penulis", widget.author),
-                        _infoCard(Icons.category, "Kategori", widget.category),
-                        _infoCard(Icons.qr_code, "ISBN", widget.isbn),
-                        _infoCard(Icons.calendar_today, "Tahun", widget.tahunTerbit.toString()),
-                        _infoCard(Icons.inventory, "Stok", widget.stok.toString()),
-                      ],
-                    ),
 
-                  const Divider(height: 30),
-                  const Text("Deskripsi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(widget.description, textAlign: TextAlign.justify),
-                ],
-              ),
-            ),
-          ),
+                      const SizedBox(height: 20),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: ElevatedButton.icon(
-              onPressed: widget.stok <= 0 ? null : _pinjamBuku,
-              icon: const Icon(Icons.library_books),
-              label: const Text("Pinjam Buku"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange[900],
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Foto dengan gesture klik fullscreen
+                            GestureDetector(
+                              onTap: _showFullImage,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  widget.image,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      height: 200,
+                                      color: Colors.grey[300],
+                                      alignment: Alignment.center,
+                                      child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 20),
+                            Text(widget.title,
+                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 10),
+
+                            GestureDetector(
+                              onTap: _toggleDetails,
+                              child: Row(
+                                children: [
+                                  Icon(showDetails ? Icons.expand_less : Icons.expand_more, color: Colors.blue),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    showDetails ? "Sembunyikan Detail Tambahan" : "Tampilkan Detail Tambahan",
+                                    style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            if (showDetails)
+                              GridView(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 3.5,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                ),
+                                children: [
+                                  _infoCard(Icons.person, "Penulis", widget.author),
+                                  _infoCard(Icons.category, "Kategori", widget.category),
+                                  _infoCard(Icons.qr_code, "ISBN", widget.isbn),
+                                  _infoCard(Icons.calendar_today, "Tahun", widget.tahunTerbit.toString()),
+                                  _infoCard(Icons.inventory, "Stok", widget.stok.toString()),
+                                ],
+                              ),
+
+                            const Divider(height: 30),
+                            const Text("Deskripsi",
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            Text(widget.description, textAlign: TextAlign.justify),
+
+                            const SizedBox(height: 30),
+
+                            ElevatedButton.icon(
+                              onPressed: widget.stok <= 0 ? null : _pinjamBuku,
+                              icon: const Icon(Icons.library_books),
+                              label: const Text("Pinjam Buku"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange[900],
+                                minimumSize: const Size(double.infinity, 50),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -148,7 +208,11 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
         color: const Color(0xFFF3F6FD),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Row(
@@ -160,7 +224,11 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
@@ -246,3 +314,4 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
     }
   }
 }
+  

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/peminjaman_service.dart';
 import '../../models/peminjaman_model.dart';
-import '../../models/buku_model.dart'; 
-import '../../screens/buku/detail_buku_screen.dart'; 
 
 class PeminjamanScreen extends StatefulWidget {
   @override
@@ -16,6 +14,7 @@ class _PeminjamanScreenState extends State<PeminjamanScreen> {
 
   List<Peminjaman> sedangDipinjam = [];
   List<Peminjaman> riwayatPeminjaman = [];
+
   final NumberFormat rupiahFormatter = NumberFormat.currency(
     locale: 'id_ID',
     symbol: 'Rp',
@@ -51,6 +50,7 @@ class _PeminjamanScreenState extends State<PeminjamanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Search Bar
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
@@ -61,13 +61,18 @@ class _PeminjamanScreenState extends State<PeminjamanScreen> {
                 onChanged: (value) => setState(() => searchQuery = value),
               ),
               const SizedBox(height: 20),
+
+              // Buku Sedang Dipinjam
               const Text("📘 Buku Sedang Dipinjam", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               ...sedangDipinjam
                   .where((b) => b.bukuJudul.toLowerCase().contains(searchQuery.toLowerCase()))
                   .map((b) => _buildBookTile(b, active: true))
                   .toList(),
+
               const SizedBox(height: 20),
+
+              // Riwayat
               const Text("📚 Riwayat Peminjaman", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               ...riwayatPeminjaman
@@ -89,46 +94,42 @@ class _PeminjamanScreenState extends State<PeminjamanScreen> {
       child: ListTile(
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(b.gambar, width: 50, height: 70, fit: BoxFit.cover),
+          child: Image.network(
+            b.gambar,
+            width: 50,
+            height: 70,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 50,
+                height: 70,
+                color: Colors.grey[300],
+                alignment: Alignment.center,
+                child: const Icon(Icons.image_not_supported, size: 30, color: Colors.grey),
+              );
+            },
+          ),
         ),
         title: Text(b.bukuJudul, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Pengarang: ${b.bukuPengarang}"),
-            Text("Pinjam: ${DateFormat('yyyy-MM-dd').format(b.tanggalPinjam)}"),
-            Text("Kembali: ${DateFormat('yyyy-MM-dd').format(b.tanggalKembali)}"),
-            if (active && DateTime.now().isAfter(b.tanggalKembali))
+            Text("Pinjam: ${b.formattedTanggalPinjam}"),
+            Text("Kembali: ${b.formattedTanggalKembali}"),
+            if (active && b.tanggalKembali != null && DateTime.now().isAfter(b.tanggalKembali!))
               Text(
-                "Denda: ${rupiahFormatter.format(DateTime.now().difference(b.tanggalKembali).inDays * Peminjaman.dendaPerHari)}",
+                "Denda: ${rupiahFormatter.format(
+                  DateTime.now().difference(b.tanggalKembali!).inDays * Peminjaman.dendaPerHari
+                )}",
                 style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
           ],
         ),
-        trailing: Icon(active ? Icons.access_time : Icons.check_circle, color: active ? Colors.orange : Colors.green),
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DetailBukuScreen(
-                bukuId: b.id, 
-                title: b.bukuJudul,
-                image: b.gambar,
-                author: b.bukuPengarang,
-                category: "Kategori", 
-                description: "Deskripsi", 
-                isbn: "ISBN", 
-                tahunTerbit: 2024,
-                stok: 1,
-              ),
-            ),
-          );
-
-          
-          if (result == true) {
-            fetchPeminjaman();
-          }
-        },
+        trailing: Icon(
+          active ? Icons.access_time : Icons.check_circle,
+          color: active ? Colors.orange : Colors.green,
+        ),
       ),
     );
   }
