@@ -9,8 +9,8 @@ class DetailBukuScreen extends StatefulWidget {
   final String category;
   final String description;
   final String isbn;
-  final int tahunTerbit;
-  final int stok;
+  final String tahunTerbit;
+  final String stok;
 
   const DetailBukuScreen({
     Key? key,
@@ -52,7 +52,11 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
                 errorBuilder: (context, error, stackTrace) => Container(
                   color: Colors.grey[300],
                   alignment: Alignment.center,
-                  child: const Icon(Icons.image_not_supported, size: 80, color: Colors.grey),
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    size: 80,
+                    color: Colors.grey,
+                  ),
                 ),
               ),
             ),
@@ -79,24 +83,40 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
                       // Header
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 40,
+                        ),
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
-                            colors: [Color(0xFF003AE6), Color(0xFF0800EF), Color(0xFF2626FF)],
+                            colors: [
+                              Color(0xFF003AE6),
+                              Color(0xFF0800EF),
+                              Color(0xFF2626FF),
+                            ],
                           ),
-                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+                          borderRadius: BorderRadius.vertical(
+                            bottom: Radius.circular(30),
+                          ),
                         ),
                         child: Row(
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_back, color: Colors.white),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                              ),
                               onPressed: () => Navigator.pop(context),
                             ),
                             const SizedBox(width: 10),
                             const Text(
                               "Detail Buku",
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ],
                         ),
@@ -123,7 +143,11 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
                                       height: 200,
                                       color: Colors.grey[300],
                                       alignment: Alignment.center,
-                                      child: const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
                                     );
                                   },
                                 ),
@@ -131,19 +155,34 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
                             ),
 
                             const SizedBox(height: 20),
-                            Text(widget.title,
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                            Text(
+                              widget.title,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 10),
 
                             GestureDetector(
                               onTap: _toggleDetails,
                               child: Row(
                                 children: [
-                                  Icon(showDetails ? Icons.expand_less : Icons.expand_more, color: Colors.blue),
+                                  Icon(
+                                    showDetails
+                                        ? Icons.expand_less
+                                        : Icons.expand_more,
+                                    color: Colors.blue,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    showDetails ? "Sembunyikan Detail Tambahan" : "Tampilkan Detail Tambahan",
-                                    style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w600),
+                                    showDetails
+                                        ? "Sembunyikan Detail Tambahan"
+                                        : "Tampilkan Detail Tambahan",
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -154,37 +193,66 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
                               GridView(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  childAspectRatio: 3.5,
-                                  crossAxisSpacing: 12,
-                                  mainAxisSpacing: 12,
-                                ),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 3.5,
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                    ),
                                 children: [
-                                  _infoCard(Icons.person, "Penulis", widget.author),
-                                  _infoCard(Icons.category, "Kategori", widget.category),
+                                  _infoCard(
+                                    Icons.person,
+                                    "Penulis",
+                                    widget.author,
+                                  ),
+                                  _infoCard(
+                                    Icons.category,
+                                    "Kategori",
+                                    widget.category,
+                                  ),
                                   _infoCard(Icons.qr_code, "ISBN", widget.isbn),
-                                  _infoCard(Icons.calendar_today, "Tahun", widget.tahunTerbit.toString()),
-                                  _infoCard(Icons.inventory, "Stok", widget.stok.toString()),
+                                  _infoCard(
+                                    Icons.calendar_today,
+                                    "Tahun",
+                                    widget.tahunTerbit.toString(),
+                                  ),
+                                  _infoCard(
+                                    Icons.inventory,
+                                    "Stok",
+                                    widget.stok.toString(),
+                                  ),
                                 ],
                               ),
 
                             const Divider(height: 30),
-                            const Text("Deskripsi",
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            const Text(
+                              "Deskripsi",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
-                            Text(widget.description, textAlign: TextAlign.justify),
+                            Text(
+                              widget.description,
+                              textAlign: TextAlign.justify,
+                            ),
 
                             const SizedBox(height: 30),
 
                             ElevatedButton.icon(
-                              onPressed: widget.stok <= 0 ? null : _pinjamBuku,
+                              onPressed: (int.tryParse(widget.stok) ?? 0) <= 0
+                                  ? null
+                                  : _pinjamBuku,
                               icon: const Icon(Icons.library_books),
                               label: const Text("Pinjam Buku"),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange[900],
                                 minimumSize: const Size(double.infinity, 50),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
                               ),
                             ),
                           ],
@@ -223,10 +291,16 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 Text(
                   value,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -276,7 +350,10 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Batal")),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Batal"),
+            ),
             ElevatedButton(
               onPressed: () {
                 lamaPinjam = int.tryParse(lamaController.text);
@@ -307,11 +384,10 @@ class _DetailBukuScreenState extends State<DetailBukuScreen> {
         );
         Navigator.pop(context, true);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal meminjam: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gagal meminjam: $e")));
       }
     }
   }
 }
-  

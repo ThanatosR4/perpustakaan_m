@@ -2,8 +2,8 @@ class Buku {
   final int id;
   final String judul;
   final String pengarang;
-  final int stok;
-  final int tahunTerbit;
+  final String stok;
+  final String tahunTerbit;
   final String gambarUrl;
   final String kategoriKode;
   final String sinopsis;
@@ -26,8 +26,8 @@ class Buku {
       id: int.tryParse(json['id'].toString()) ?? 0,
       judul: json['judul'] ?? '',
       pengarang: json['pengarang'] ?? '',
-      stok: int.tryParse(json['stok'].toString()) ?? 0,
-      tahunTerbit: int.tryParse(json['tahun_terbit'].toString()) ?? 0,
+      stok: json['stok'] ?? '',
+      tahunTerbit: json['tahun_terbit'] ?? '',
       gambarUrl: json['gambar'] != null
           ? 'https://perpustakaansma1telker.web.id/storage/${json['gambar']}'
           : 'https://via.placeholder.com/150',
